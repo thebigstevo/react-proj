@@ -34,7 +34,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Run tests
-        run: npm tests
+        run: npm test
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
