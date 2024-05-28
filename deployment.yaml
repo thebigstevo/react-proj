@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-proj-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: react-proj
+  template:
+    metadata:
+      labels:
+        app: react-proj
+    spec:
+      containers:
+      - name: react-proj
+        image: devksom/react-proj:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+    
