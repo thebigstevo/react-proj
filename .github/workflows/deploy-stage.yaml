@@ -10,14 +10,16 @@ on:
     branches: ['master', 'main']
 
 permissions:
-    contents: write   
+  contents: write
+
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKERHUB_TOKEN: ${{ secrets.DOCKER_TOKEN}}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  
   AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}  # Terraform Cloud API token
 
 jobs:
   build:
@@ -27,13 +29,14 @@ jobs:
         node-version: [18]
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version}}
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: ${{matrix.node-version}}
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
   push-docker-image:
-    name: Build Docker image and push to repositorires
+    name: Build Docker image and push to repositories
     runs-on: ubuntu-latest
     needs: ['build']
     steps:
@@ -43,6 +46,38 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - run: docker build -t devksom/react-proj:latest  --no-cache .
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - run: docker build -t devksom/react-proj:latest --no-cache .
       - run: docker push devksom/react-proj:latest
+
+  # provision-aws-eks-cluster:
+  #   runs-on: ubuntu-latest
+  #   needs: ['build', 'push-docker-image']
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Setup Terraform CLI
+  #       uses: hashicorp/setup-terraform@v2
+  #       with:
+  #         terraform_version: 1.3.7  # Specify your Terraform version here
+
+  #     - name: Terraform Init
+  #       run: terraform init
+
+  #     - name: Terraform Plan
+  #       run: terraform plan
+
+  #     - name: Terraform Apply
+  #       run: terraform apply -auto-approve
+
+  #     - name: Trigger Terraform Cloud Run
+  #       env:
+  #         TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+  #       run: |
+  #         curl \
+  #         --header "Authorization: Bearer ${TF_API_TOKEN}" \
+  #         --header "Content-Type: application/vnd.api+json" \
+  #         --request POST \
+  #         --data '{"data": {"attributes": {"message": "Triggered by GitHub Actions"}, "type": "runs", "relationships": {"workspace": {"data": {"type": "workspaces", "id": "YOUR_WORKSPACE_ID"}}}}}' \
+  #         https://app.terraform.io/api/v2/runs
