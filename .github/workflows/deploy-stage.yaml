@@ -5,9 +5,12 @@ name: "CI/CD Pipeline for React App to AWS EKS"
 
 on:
   push:
-    branches: ['master', 'main']
+    branches: ['master', 'main', 'dev']
   pull_request:
-    branches: ['master', 'main']
+    branches: ['master', 'main', 'dev']
+defaults:
+  run:
+    working-directory: './react'
 
 permissions:
   contents: write
@@ -24,6 +27,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         node-version: [18]
@@ -34,6 +38,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: ./react/package-lock.json
 
   push-docker-image:
     name: Build Docker image and push to repositories
